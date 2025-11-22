@@ -72,7 +72,7 @@ function AuthorsPage() {
 
    const fetchAuthors = async () => {
       try {
-         const response = await fetch(`${API_URL}/authors`);
+         const response = await fetch(`${API_URL}/api/authors`);
          const { authors, message } = await response.json();
 
          if (!response.ok) {
@@ -95,7 +95,7 @@ function AuthorsPage() {
    const editAuthor = async (author: Author) => {
       try {
          if (activeAuthor) {
-            const response = await fetch(`${API_URL}/authors/${activeAuthor.id}`, {
+            const response = await fetch(`${API_URL}/api/authors/${activeAuthor.id}`, {
                method: 'PUT',
                headers: {
                   'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ function AuthorsPage() {
 
    const addAuthor = async (author: Author) => {
       try {
-         const response = await fetch(`${API_URL}/authors`, {
+         const response = await fetch(`${API_URL}/api/authors`, {
             method: 'POST',
             headers: {
                'Content-Type': 'application/json',
@@ -174,7 +174,7 @@ function AuthorsPage() {
    const authorDelete = async () => {
       try {
          if (activeAuthor) {
-            const response = await fetch(`${API_URL}/authors/${activeAuthor.id}`, {
+            const response = await fetch(`${API_URL}/api/authors/${activeAuthor.id}`, {
                method: 'DELETE',
                headers: {
                   'Content-Type': 'application/json',
