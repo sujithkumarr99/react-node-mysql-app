@@ -1,270 +1,170 @@
-# Jain University mini project
-This project is a full-stack web application built using React js for the frontend, Express js for the backend, and MySQL as the database. The application is designed to demonstrate the implementation of a 3-tier architecture, where the presentation layer (React js), application logic layer (Express js), and data layer (MySQL) are separated into distinct tiers.
+# 🚀 Full-Stack 3-Tier Web Application on AWS
 
+## 📌 Project Overview
 
-## User Interface Screenshots 
-#### Dashboard
-![Dashboard](./frontend/public/ss/dashboard.png)
+Designed and deployed a production-style 3-tier web application using React.js, Node.js/Express.js, and MySQL, hosted on AWS cloud infrastructure. The project demonstrates modern DevOps practices including Infrastructure Design, CI/CD Automation, High Availability, Auto Scaling, Load Balancing, Monitoring, and Secure Network Architecture.
 
-#### Books
-![Dashboard](./frontend/public/ss/books.png)
+---
 
-#### Authors
-![Dashboard](./frontend/public/ss/authors.png)
+## 🏗️ Architecture
 
-## Connet to RDS instance via SSH
-#### To change the ssh key permission:
+The application follows a 3-tier architecture:
 
-```bash
-chmod 400 your_key.pem
-```
+### 1. Presentation Layer
+- React.js frontend
+- Serves user interface and client-side interactions
+- Hosted on EC2 instances behind an Application Load Balancer
 
-#### To start ssh agent:
+### 2. Application Layer
+- Node.js & Express.js backend
+- Handles business logic and API requests
+- Deployed on private EC2 instances
 
-```bash
-eval "$(ssh-agent -s)"  
-```
+### 3. Data Layer
+- MySQL database
+- Stores application data securely
+- Isolated within private subnet architecture
 
-#### To add key to ssh agent:
+---
 
-```bash
-ssh-add your_key.pem
-```
+## ☁️ AWS Infrastructure
 
-#### SSH tunneling through a bastion host
-```bash
-ssh -i /path/to/your/private-key.pem -N -L 3307:<RDS-Endpoint>:3306 ec2-user@<Bastion-Host-IP>
-```
+### Network Architecture
+- Designed a custom VPC across **2 Availability Zones**
+- Created **6 Subnets**
+  - Public Subnets
+  - Private Application Subnets
+  - Private Database Subnets
+- Configured:
+  - Internet Gateway
+  - NAT Gateway
+  - Route Tables
+  - Security Groups
+  - Network Isolation
 
-## Setting up the Presentation Tier
-#### User data script
+### Compute Resources
+- Bastion Host for secure administration
+- Frontend EC2 Instances
+- Backend EC2 Instances
+- Auto Scaling Group for application servers
 
-```bash
-#!/bin/bash
-# Update package list and install required packages
-sudo yum update -y
+### Load Balancing
+- Configured Application Load Balancer (ALB)
+- Distributed incoming traffic across multiple instances
+- Improved application availability and fault tolerance
 
-# Install NGINX
-sudo yum install -y nginx
+---
 
-# Start and enable NGINX
-sudo systemctl start nginx
-sudo systemctl enable nginx
+## ⚙️ CI/CD Implementation
 
-# Define variables
-APP_TIER_ALB_URL="http://<internal-application-tier-alb-end-point.region.elb.amazonaws.com>"  # Replace with your actual alb endpoint
-NGINX_CONF="/etc/nginx/nginx.conf"
-SERVER_NAME="<domain subdomain>"  # Replace with your actual domain name
+Implemented a fully automated CI/CD pipeline using AWS services:
 
-# Backup existing NGINX configuration
-sudo cp $NGINX_CONF ${NGINX_CONF}.bak
+### Pipeline Workflow
+1. Source code pushed to GitHub
+2. AWS CodePipeline triggers deployment
+3. Application build and deployment process executes automatically
+4. Updated application deployed to EC2 instances
 
-# Write new NGINX configuration
-sudo tee $NGINX_CONF > /dev/null <<EOL
-user nginx;
-worker_processes auto;
+### Benefits
+- Faster deployments
+- Reduced manual intervention
+- Consistent release process
+- Improved development workflow
 
-error_log /var/log/nginx/error.log warn;
-pid /run/nginx.pid;
+---
 
-events {
-    worker_connections 1024;
-}
+## 📊 Monitoring & Logging
 
-http {
-    include /etc/nginx/mime.types;
-    default_type application/octet-stream;
+Implemented monitoring and observability using Amazon CloudWatch:
 
-    log_format main '\$remote_addr - \$remote_user [\$time_local] "\$request" '
-                    '\$status \$body_bytes_sent "\$http_referer" '
-                    '"\$http_user_agent" "\$http_x_forwarded_for"';
+- Application performance monitoring
+- Resource utilization tracking
+- Log collection and analysis
+- Infrastructure health monitoring
+- Operational visibility and troubleshooting
 
-    access_log /var/log/nginx/access.log main;
+---
 
-    sendfile on;
-    tcp_nopush on;
-    tcp_nodelay on;
-    keepalive_timeout 65;
-    types_hash_max_size 2048;
+## 🔐 Security Features
 
-    include /etc/nginx/conf.d/*.conf;
-}
-EOL
+- Private subnet deployment for backend services
+- Bastion host for secure SSH access
+- Security Groups with least-privilege access
+- Network segmentation using VPC architecture
+- Controlled inbound and outbound traffic rules
 
-# Create a separate NGINX configuration file
-sudo tee /etc/nginx/conf.d/presentation-tier.conf > /dev/null <<EOL
-server {
-    listen 80;
-    server_name $SERVER_NAME;
-    root /usr/share/nginx/html;
-    index index.html index.htm;
+---
 
-    #health check
-    location /health {
-        default_type text/html;
-        return 200 "<!DOCTYPE html><p>Health check endpoint</p>\n";
-    }
+## 🛠️ Technology Stack
 
-    location / {
-        try_files \$uri /index.html;
-    }
+### Frontend
+- React.js
+- HTML5
+- CSS3
+- JavaScript
 
-    location /api/ {
-        proxy_pass $APP_TIER_ALB_URL;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-    }
-}
-EOL
+### Backend
+- Node.js
+- Express.js
 
+### Database
+- MySQL
 
-# Restart NGINX to apply the new configuration
-sudo systemctl restart nginx
+### AWS Services
+- VPC
+- EC2
+- Auto Scaling
+- Application Load Balancer
+- CodePipeline
+- CloudWatch
+- IAM
+- Route Tables
+- Internet Gateway
+- NAT Gateway
 
-# Install CloudWatch agent
-sudo yum install -y amazon-cloudwatch-agent
+### DevOps Tools
+- Git
+- GitHub
+- CI/CD
+- Linux
 
-# Create CloudWatch agent configuration
-sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json > /dev/null <<EOL
-{
-  "logs": {
-    "logs_collected": {
-      "files": {
-        "collect_list": [
-         {
-            "file_path": "/var/log/nginx/access.log",
-            "log_group_name": "nginx-logs-frontend",
-            "log_stream_name": "{instance_id}-nginx-access",
-            "timestamp_format": "%b %d %H:%M:%S"
-          },
-          {
-            "file_path": "/var/log/nginx/error.log",
-            "log_group_name": "nginx-logs-frontend",
-            "log_stream_name": "{instance_id}-nginx-error",
-            "timestamp_format": "%b %d %H:%M:%S"
-          },
-          {
-            "file_path": "/var/log/aws/codedeploy-agent/codedeploy-agent.log",
-            "log_group_name": "codedeploy-agent-logs-frontend",
-            "log_stream_name": "{instance_id}-agent-log"
-          },
-          {
-            "file_path": "/opt/codedeploy-agent/deployment-root/deployment-logs/codedeploy-agent-deployments.log",
-            "log_group_name": "codedeploy-agent-logs-frontend",
-            "log_stream_name": "{instance_id}-codedeploy-agent-deployment-log"
-          },
-          {
-            "file_path": "/tmp/codedeploy-agent.update.log",
-            "log_group_name": "codedeploy-agent-logs-frontend",
-            "log_stream_name": "{instance_id}-codedeploy-agent-updater-log"
-          }
-        ]
-      }
-    }
-  }
-}
-EOL
+---
 
-# Start CloudWatch agent
-sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+## 🎯 Key Achievements
 
-# Install code deploy agent
-sudo yum install ruby -y
-sudo yum install wget -y
-cd /home/ec2-user
-wget https://aws-codedeploy-us-east-1.s3.us-east-1.amazonaws.com/latest/install
-chmod +x ./install
-sudo ./install auto
-sudo systemctl start codedeploy-agent
-```
+✅ Built and deployed a complete 3-tier web application architecture
 
-## Setting up the Application Tier
-#### User data script
+✅ Automated application deployment using AWS CodePipeline
 
-```bash
-#!/bin/bash 
-# Update package list and install required packages 
-sudo yum update -y
+✅ Designed a highly available VPC architecture across multiple Availability Zones
 
-# Install Node.js
-curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash - 
-sudo yum install -y nodejs 
+✅ Implemented Auto Scaling and Load Balancing for scalability
 
-# Install PM2 globally 
-sudo npm install -g pm2 
+✅ Configured secure network infrastructure using public and private subnets
 
-# Define the log directory and ensure it exists 
-LOG_DIR="/var/log/react-node-mysql-app/backend" 
-mkdir -p $LOG_DIR 
-sudo chown -R root:root $LOG_DIR
+✅ Established centralized monitoring and logging with CloudWatch
 
-# Create the combined.log file
-sudo touch $LOG_DIR/combined.log
-sudo chown root:root $LOG_DIR/combined.log  # Set ownership to root
+✅ Applied real-world DevOps practices including automation, security, and infrastructure design
 
-# Create the error.log file
-sudo touch $LOG_DIR/error.log
-sudo chown root:root $LOG_DIR/error.log  # Set ownership to root
+---
 
-# Ensure PM2 restarts on reboot as root
-sudo -u root pm2 startup systemd 
-sudo -u root pm2 save 
+## 🚀 Future Enhancements
 
-# Install CloudWatch agent
-sudo yum install -y amazon-cloudwatch-agent
+- Docker Containerization
+- Kubernetes (EKS) Deployment
+- Terraform Infrastructure as Code
+- AWS RDS Integration
+- AWS ECS Deployment
+- Prometheus & Grafana Monitoring
+- Blue-Green Deployment Strategy
 
-# Create CloudWatch agent configuration
-sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json > /dev/null <<EOL
-{
-  "logs": {
-    "logs_collected": {
-      "files": {
-        "collect_list": [
-          {
-            "file_path": "/var/log/react-node-mysql-app/backend/combined.log",
-            "log_group_name": "node-app-logs-backend",
-            "log_stream_name": "{instance_id}-combined-log",
-            "timestamp_format": "%Y-%m-%d %H:%M:%S"
-          },
-          {
-            "file_path": "/var/log/react-node-mysql-app/backend/error.log",
-            "log_group_name": "node-app-logs-backend",
-            "log_stream_name": "{instance_id}-error-log",
-            "timestamp_format": "%Y-%m-%d %H:%M:%S"
-          },
-          {
-            "file_path": "/var/log/aws/codedeploy-agent/codedeploy-agent.log",
-            "log_group_name": "codedeploy-agent-logs-backend",
-            "log_stream_name": "{instance_id}-agent-log"
-          },
-          {
-            "file_path": "/opt/codedeploy-agent/deployment-root/deployment-logs/codedeploy-agent-deployments.log",
-            "log_group_name": "codedeploy-agent-logs-backend",
-            "log_stream_name": "{instance_id}-codedeploy-agent-deployment-log"
-          },
-          {
-            "file_path": "/tmp/codedeploy-agent.update.log",
-            "log_group_name": "codedeploy-agent-logs-backend",
-            "log_stream_name": "{instance_id}-codedeploy-agent-updater-log"
-          }
-        ]
-      }
-    }
-  }
-}
-EOL
+---
 
-# Start CloudWatch agent
-sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+## 👨‍💻 Author
 
-# Install code deploy agent
-sudo yum install ruby -y
-sudo yum install wget -y
-cd /home/ec2-user
-wget https://aws-codedeploy-us-east-1.s3.us-east-1.amazonaws.com/latest/install
-chmod +x ./install
-sudo ./install auto
-sudo systemctl start codedeploy-agent
-```
+**Sujith Kumar R**
+
+Aspiring DevOps Engineer | Cloud Engineer | MERN Stack Developer
+
+- GitHub: https://github.com/sujithkumarr99
+- LinkedIn: Add Your LinkedIn Profile
